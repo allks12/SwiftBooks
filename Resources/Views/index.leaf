@@ -2,11 +2,30 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-
-  <title>#(title)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Swift Books</title>
+    <link rel="stylesheet" href="/style.css?v=5">
 </head>
 
 <body>
-  <h1>#(title)</h1>
+  <h1>Favourite books 📚</h1>
+
+    <form action="/" method="GET" style="margin-bottom: 30px; display: flex; gap: 10px; width: 100%; max-width: 1000px;">
+        <input type="text" name="search" placeholder="Search book by title..." style="flex: 1; padding: 12px 20px; border-radius: 12px; border: 1px solid #d2d2d7; font-size: 16px; background-color: white;">
+        <button type="submit" class="buy-button" style="width: auto; padding: 0 25px; margin: 0;">Search</button>
+        <a href="/" class="buy-button" style="width: auto; padding: 12px 20px; margin: 0; background-color: #6e6e73; text-decoration: none;">Clear</a>
+    </form>
+
+    <div class="books-grid">
+        #for(book in books):
+        <div class="book-card">
+            <img src="#(book.image)" alt="Book cover">
+            <h3>#(book.title)</h3>
+            <p>Author: #(book.author)</p>
+            <p>Price: #(book.price)</p>
+            <a href="/book/#(book.bookId)" class="buy-button">See details</a>
+        </div>
+        #endfor
+    </div>
 </body>
 </html>
