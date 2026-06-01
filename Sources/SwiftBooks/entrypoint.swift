@@ -11,10 +11,9 @@ enum Entrypoint {
         
         let app = try await Application.make(env)
 
-        // Ръчно фиксираме пътя до папка Public
         let currentDirectory = DirectoryConfiguration.detect()
         app.directory = DirectoryConfiguration(workingDirectory: currentDirectory.workingDirectory)
-        // Това казва на сървъра: "Обслужвай файлове от папка Public!"
+
         app.middleware.use(FileMiddleware(publicDirectory: app.directory.publicDirectory))
 
         // This attempts to install NIO as the Swift Concurrency global executor.

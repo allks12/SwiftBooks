@@ -1,16 +1,14 @@
 import Fluent
 import Vapor
 
-// ==========================================
-// 1. ИСТИНСКИ МОДЕЛ ЗА ТАБЛИЦА "BOOKS"
-// ==========================================
+// books table
 final class Book: Model, Content, @unchecked Sendable {
     static let schema = "books"
 
     @ID(key: .id)
     var id: UUID?
 
-    @Field(key: "book_id") // Числото 1, 2, 3 за линковете
+    @Field(key: "book_id")
     var bookId: Int
 
     @Field(key: "title")
@@ -41,9 +39,7 @@ final class Book: Model, Content, @unchecked Sendable {
     }
 }
 
-// ==========================================
-// 2. ИСТИНСКИ МОДЕЛ ЗА ТАБЛИЦА "ORDERS"
-// ==========================================
+// orders table
 final class Order: Model, Content, @unchecked Sendable {
     static let schema = "orders"
 
@@ -73,12 +69,10 @@ final class Order: Model, Content, @unchecked Sendable {
     }
 }
 
-// ==========================================
-// 3. МИГРАЦИЯТА ЗА SQLite
-// ==========================================
+// migration to sqllite db
 struct CreateBooksAndOrders: AsyncMigration {
     func prepare(on database: any Database) async throws {
-        // Създаваме таблицата за книгите
+        // Creating books
         try await database.schema("books")
             .id()
             .field("book_id", .int, .required)
@@ -89,7 +83,7 @@ struct CreateBooksAndOrders: AsyncMigration {
             .field("description", .string, .required)
             .create()
 
-        // Създаваме таблицата за поръчките
+        // creating orders
         try await database.schema("orders")
             .id()
             .field("customer_name", .string, .required)
@@ -98,7 +92,7 @@ struct CreateBooksAndOrders: AsyncMigration {
             .field("book_title", .string, .required)
             .create()
 
-        // Пълним автоматично 16-те книги в базата данни
+        // Fill books with default values
         let defaultBooks = [
             Book(bookId: 1, title: "A Court of Thorns and Roses", author: "Sarah J. Maas", price: "15.00 EUR", image: "/book1.jpg", description: "When nineteen-year-old huntress Feyre kills a wolf in the woods, a beast-like creature arrives to demand retribution. Dragged to a treacherous magical land she only knows about from legends, Feyre discovers that her captor is not truly a beast, but one of the lethal, immortal faeries who once ruled their world. As she dwells on his estate, her feelings for the faerie, Tamlin, transform from icy hostility into a fiery passion that burns through every lie and warning she’s been told about the beautiful, dangerous world of the Fae. But an ancient, wicked shadow over the faerie lands is growing, and Feyre must find a way to stop it . . . or doom Tamlin—and his world—forever."),
             Book(bookId: 2, title: "Throne of Glass", author: "Sarah J. Maas", price: "15.00 EUR", image: "/book2.jpg", description: "In a land without magic, an assassin is summoned to the castle. She has no love for the vicious king who rules from his throne of glass, but she has not come to kill him. She has come to win her freedom. If she defeats twenty-three murderers, thieves, and warriors in a competition, she will be released from prison to serve as the King’s Champion. Her name is Celaena Sardothien. The Crown Prince will provoke her. The Captain of the Guard will protect her. And a princess from a faraway country will befriend her. But something rotten dwells in the castle, and it’s there to kill. When her competitors start dying mysteriously, one by one, Celaena’s fight for freedom becomes a fight for survival-and a desperate quest to root out the evil before it destroys her world."),
@@ -129,19 +123,17 @@ struct CreateBooksAndOrders: AsyncMigration {
     }
 }
 
-// ==========================================
-// 4. МАРШРУТИ (ROUTES ДИРЕКТНО СЪС SQLite)
-// ==========================================
+// routes
 func routes(_ app: Application) throws {
 
-    // А. НАЧАЛНА СТРАНИЦА - Чете книгите от базата и филтрира през SQL
+    // home page
     app.get { req async throws -> View in
         let searchTerm: String? = req.query["search"]
 
         let query = Book.query(on: req.db)
 
         if let search = searchTerm, !search.isEmpty {
-            // Търси чрез SQL LIKE заявка
+            // search query
             query.filter(\.$title, .custom("LIKE"), "%\(search)%")
         }
 
@@ -149,7 +141,7 @@ func routes(_ app: Application) throws {
         return try await req.view.render("index", ["books": allBooks])
     }
 
-    // Б. ДЕТАЙЛИ НА КНИГАТА - Търси в базата по числото bookId
+    // book details
     app.get("book", ":bookID") { req async throws -> View in
         guard let bookIDString = req.parameters.get("bookID"),
               let idQuery = Int(bookIDString) else {
@@ -165,7 +157,7 @@ func routes(_ app: Application) throws {
         return try await req.view.render("bookDetails", book)
     }
 
-    // В. ПОКУПКА - Записва новата поръчка директно в таблицата "orders"
+    // order book
     app.post("submit-order") { req async throws -> View in
         struct InputOrder: Content {
             let customerName: String
@@ -183,7 +175,7 @@ func routes(_ app: Application) throws {
             bookTitle: input.bookTitle
         )
 
-        // Записваме я в SQLite!
+        // saving the order in db
         try await newOrder.create(on: req.db)
         return try await req.view.render("orderSuccess", newOrder)
     }

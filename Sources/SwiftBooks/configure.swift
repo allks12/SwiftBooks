@@ -11,7 +11,6 @@ public func configure(_ app: Application) async throws {
 
     app.databases.use(DatabaseConfigurationFactory.sqlite(.file("db.sqlite")), as: .sqlite)
 
-    // ПОПРАВЕНО: Сложихме твоята миграция за книгите и поръчките!
     app.migrations.add(CreateBooksAndOrders())
 
     app.views.use(.leaf)
